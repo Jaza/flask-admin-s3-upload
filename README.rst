@@ -4,6 +4,12 @@ flask-admin-s3-upload
 Field types for allowing file and image uploads to Amazon S3 (as well as default local storage) in Flask-Admin.
 
 
+Example
+-------
+
+For a complete, working Flask app that demonstrates flask-admin-s3-upload in action, have a look at `flask-s3-save-example <https://github.com/Jaza/flask-s3-save-example>`_.
+
+
 Usage
 -----
 
