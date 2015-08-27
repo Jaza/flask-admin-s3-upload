@@ -17,9 +17,9 @@ from boto.exception import S3ResponseError
 from boto.s3.key import Key
 from werkzeug.datastructures import FileStorage
 
-from flask.ext.admin.form.upload import FileUploadField, ImageUploadInput, thumbgen_filename
+from flask.ext.admin.form.upload import FileUploadField, ImageUploadInput, \
+    thumbgen_filename
 from flask.ext.admin._compat import urljoin
-from flask.ext.admin.helpers import get_url
 
 from url_for_s3 import url_for_s3
 
@@ -38,7 +38,10 @@ class S3FileUploadField(FileUploadField):
         super(S3FileUploadField, self).__init__(label, validators, **kwargs)
 
         if storage_type and (storage_type != 's3'):
-            raise ValueError('Storage type "%s" is invalid, the only supported storage type (apart from default local storage) is s3.' % storage_type)
+            raise ValueError(
+                'Storage type "%s" is invalid, the only supported storage type'
+                ' (apart from default local storage) is s3.' % storage_type
+            )
 
         self.storage_type = storage_type
         self.bucket_name = bucket_name
@@ -64,7 +67,8 @@ class S3FileUploadField(FileUploadField):
 
                 return
 
-        if self.data and isinstance(self.data, FileStorage) and self.data.filename:
+        if (self.data and isinstance(self.data, FileStorage)
+                and self.data.filename):
             if field:
                 self._delete_file(field, obj)
 
@@ -90,9 +94,11 @@ class S3FileUploadField(FileUploadField):
 
     def _get_s3_path(self, filename):
         if not self.static_root_parent:
-            raise ValueError('S3FileUploadField field requires static_root_parent to be set.')
+            raise ValueError('S3FileUploadField field requires '
+                             'static_root_parent to be set.')
 
-        return re.sub('^\/', '', self._get_path(filename).replace(self.static_root_parent, ''))
+        return re.sub('^\/', '', self._get_path(filename).replace(
+            self.static_root_parent, ''))
 
     def _delete_file(self, filename, obj):
         storage_type = getattr(obj, self.storage_type_field, '')
@@ -102,7 +108,9 @@ class S3FileUploadField(FileUploadField):
             return super(S3FileUploadField, self)._delete_file(filename)
 
         if storage_type != 's3':
-            raise ValueError('Storage type "%s" is invalid, the only supported storage type (apart from default local storage) is s3.' % storage_type)
+            raise ValueError(
+                'Storage type "%s" is invalid, the only supported storage type'
+                ' (apart from default local storage) is s3.' % storage_type)
 
         conn = S3Connection(self.access_key_id, self.access_key_secret)
         bucket = conn.get_bucket(bucket_name)
@@ -140,7 +148,10 @@ class S3FileUploadField(FileUploadField):
             return self._save_file_local(temp_file, filename)
 
         if self.storage_type != 's3':
-            raise ValueError('Storage type "%s" is invalid, the only supported storage type (apart from default local storage) is s3.' % self.storage_type)
+            raise ValueError(
+                'Storage type "%s" is invalid, the only supported storage type'
+                ' (apart from default local storage) is s3.'
+                % self.storage_type)
 
         conn = S3Connection(self.access_key_id, self.access_key_secret)
         bucket = conn.get_bucket(self.bucket_name)
@@ -171,7 +182,8 @@ class S3ImageUploadInput(ImageUploadInput):
         if field.url_relative_path:
             filename = urljoin(field.url_relative_path, filename)
 
-        return url_for_s3('static', bucket_name=field.bucket_name, filename=filename)
+        return url_for_s3('static', bucket_name=field.bucket_name,
+                          filename=filename)
 
 
 class S3ImageUploadField(S3FileUploadField):
@@ -202,8 +214,10 @@ class S3ImageUploadField(S3FileUploadField):
         self.image = None
         self.url_relative_path = url_relative_path
 
-        if (not ('allowed_extensions' in kwargs)) or not kwargs['allowed_extensions']:
-            kwargs['allowed_extensions'] = ('gif', 'jpg', 'jpeg', 'png', 'tiff')
+        if (not ('allowed_extensions' in kwargs)
+                or not kwargs['allowed_extensions']):
+            kwargs['allowed_extensions'] = \
+                ('gif', 'jpg', 'jpeg', 'png', 'tiff')
 
         super(S3ImageUploadField, self).__init__(label, validators,
                                                **kwargs)
@@ -240,7 +254,9 @@ class S3ImageUploadField(S3FileUploadField):
             return
 
         if storage_type != 's3':
-            raise ValueError('Storage type "%s" is invalid, the only supported storage type (apart from default local storage) is s3.' % storage_type)
+            raise ValueError(
+                'Storage type "%s" is invalid, the only supported storage type'
+                ' (apart from default local storage) is s3.' % storage_type)
 
         conn = S3Connection(self.access_key_id, self.access_key_secret)
         bucket = conn.get_bucket(bucket_name)
@@ -257,12 +273,14 @@ class S3ImageUploadField(S3FileUploadField):
     # Saving
     def _save_file(self, temp_file, filename):
         if self.storage_type and (self.storage_type != 's3'):
-            raise ValueError('Storage type "%s" is invalid, the only supported storage type (apart from default local storage) is s3.' % storage_type)
+            raise ValueError(
+                'Storage type "%s" is invalid, the only supported storage type'
+                ' (apart from default local storage) is s3.' % storage_type)
 
         # Figure out format
         filename, format = self._get_save_format(filename, self.image)
 
-        if self.image: #and (self.image.format != format or self.max_size):
+        if self.image:    # and (self.image.format != format or self.max_size):
             if self.max_size:
                 image = self._resize(self.image, self.max_size)
             else:
@@ -283,14 +301,16 @@ class S3ImageUploadField(S3FileUploadField):
                              temp_file,
                              format)
 
-            super(S3ImageUploadField, self)._save_file(temp_file, self.thumbnail_fn(filename))
+            super(S3ImageUploadField, self)._save_file(
+                temp_file, self.thumbnail_fn(filename))
 
     def _resize(self, image, size):
         (width, height, force) = size
 
         if image.size[0] > width or image.size[1] > height:
             if force:
-                return ImageOps.fit(self.image, (width, height), Image.ANTIALIAS)
+                return ImageOps.fit(self.image, (width, height),
+                                    Image.ANTIALIAS)
             else:
                 thumb = self.image.copy()
                 thumb.thumbnail((width, height), Image.ANTIALIAS)
