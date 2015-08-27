@@ -64,7 +64,7 @@ class S3FileUploadField(FileUploadField):
 
                 return
 
-        if self.data and self.data.filename and isinstance(self.data, FileStorage):
+        if self.data and isinstance(self.data, FileStorage) and self.data.filename:
             if field:
                 self._delete_file(field, obj)
 
