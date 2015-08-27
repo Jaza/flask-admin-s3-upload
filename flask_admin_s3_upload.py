@@ -17,6 +17,8 @@ from boto.exception import S3ResponseError
 from boto.s3.key import Key
 from werkzeug.datastructures import FileStorage
 
+from wtforms import ValidationError
+
 from flask.ext.admin.form.upload import FileUploadField, ImageUploadInput, \
     thumbgen_filename
 from flask.ext.admin._compat import urljoin
@@ -275,7 +277,8 @@ class S3ImageUploadField(S3FileUploadField):
         if self.storage_type and (self.storage_type != 's3'):
             raise ValueError(
                 'Storage type "%s" is invalid, the only supported storage type'
-                ' (apart from default local storage) is s3.' % storage_type)
+                ' (apart from default local storage) is s3.' % (
+                    self.storage_type,))
 
         # Figure out format
         filename, format = self._get_save_format(filename, self.image)
