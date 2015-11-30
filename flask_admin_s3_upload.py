@@ -184,7 +184,7 @@ class S3ImageUploadInput(ImageUploadInput):
         if field.url_relative_path:
             filename = urljoin(field.url_relative_path, filename)
 
-        return url_for_s3('static', bucket_name=field.bucket_name,
+        return url_for_s3(field.endpoint, bucket_name=field.bucket_name,
                           filename=filename)
 
 
