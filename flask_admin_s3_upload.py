@@ -293,8 +293,8 @@ class S3ImageUploadField(S3FileUploadField):
             self._save_image(image, temp_file, format)
 
         super(S3ImageUploadField, self)._save_file(temp_file, filename)
-
-        self._save_thumbnail(temp_file, filename, format)
+        temp_file_thumbnail = BytesIO()
+        self._save_thumbnail(temp_file_thumbnail, filename, format)
 
         return filename
 
