@@ -18,10 +18,10 @@ from boto.s3.key import Key
 from werkzeug.datastructures import FileStorage
 
 from wtforms import ValidationError
-
-from flask.ext.admin.form.upload import FileUploadField, ImageUploadInput, \
+x
+from flask_admin.form.upload import FileUploadField, ImageUploadInput, \
     thumbgen_filename
-from flask.ext.admin._compat import urljoin
+from flask_admin._compat import urljoin
 
 from url_for_s3 import url_for_s3
 
