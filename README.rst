@@ -29,17 +29,13 @@ Use with a Flask-Admin ModelView by overriding field types, and by passing in sp
                 base_path='/some/folder/static',
                 relative_path='some_image/',
                 url_relative_path='uploads/',
-                namegen=your_namegen_func_here,
-                storage_type_field='some_image_storage_type',
-                bucket_name_field='some_image_storage_bucket_name',
+                namegen=your_namegen_func_here
             ),
             some_file=dict(
                 base_path='/some/folder/static',
                 relative_path='some_file/',
                 namegen=your_namegen_func_here,
-                allowed_extensions=('pdf', 'txt'),
-                storage_type_field='some_file_storage_type',
-                bucket_name_field='some_file_storage_bucket_name',
+                allowed_extensions=('pdf', 'txt')
             ))
 
         def scaffold_form(self):

@@ -35,7 +35,6 @@ class S3FileUploadField(FileUploadField):
     def __init__(self, label=None, validators=None, storage_type=None,
                  bucket_name=None, access_key_id=None,
                  access_key_secret=None, acl='public-read',
-                 storage_type_field=None, bucket_name_field=None,
                  static_root_parent=None, **kwargs):
         super(S3FileUploadField, self).__init__(label, validators, **kwargs)
 
@@ -50,8 +49,6 @@ class S3FileUploadField(FileUploadField):
         self.access_key_id = access_key_id
         self.access_key_secret = access_key_secret
         self.acl = acl
-        self.storage_type_field = storage_type_field
-        self.bucket_name_field = bucket_name_field
         self.static_root_parent = static_root_parent
 
     def populate_obj(self, obj, name):
@@ -61,11 +58,6 @@ class S3FileUploadField(FileUploadField):
             if self._should_delete:
                 self._delete_file(field, obj)
                 setattr(obj, name, '')
-
-                if self.storage_type_field:
-                    setattr(obj, self.storage_type_field, '')
-                if self.bucket_name_field:
-                    setattr(obj, self.bucket_name_field, '')
 
                 return
 
@@ -83,17 +75,6 @@ class S3FileUploadField(FileUploadField):
 
             setattr(obj, name, filename)
 
-            if self.storage_type == 's3':
-                if self.storage_type_field:
-                    setattr(obj, self.storage_type_field, self.storage_type)
-                if self.bucket_name_field:
-                    setattr(obj, self.bucket_name_field, self.bucket_name)
-            else:
-                if self.storage_type_field:
-                    setattr(obj, self.storage_type_field, '')
-                if self.bucket_name_field:
-                    setattr(obj, self.bucket_name_field, '')
-
     def _get_s3_path(self, filename):
         if not self.static_root_parent:
             raise ValueError('S3FileUploadField field requires '
@@ -103,19 +84,16 @@ class S3FileUploadField(FileUploadField):
             self.static_root_parent, ''))
 
     def _delete_file(self, filename, obj):
-        storage_type = getattr(obj, self.storage_type_field, '')
-        bucket_name = getattr(obj, self.bucket_name_field, '')
-
-        if not (storage_type and bucket_name):
+        if not (self.storage_type and self.bucket_name):
             return super(S3FileUploadField, self)._delete_file(filename)
 
-        if storage_type != 's3':
+        if self.storage_type != 's3':
             raise ValueError(
                 'Storage type "%s" is invalid, the only supported storage type'
-                ' (apart from default local storage) is s3.' % storage_type)
+                ' (apart from default local storage) is s3.' % self.storage_type)
 
         conn = S3Connection(self.access_key_id, self.access_key_secret)
-        bucket = conn.get_bucket(bucket_name)
+        bucket = conn.get_bucket(self.bucket_name)
 
         path = self._get_s3_path(filename)
         k = Key(bucket)
@@ -237,12 +215,9 @@ class S3ImageUploadField(S3FileUploadField):
 
     # Deletion
     def _delete_file(self, filename, obj):
-        storage_type = getattr(obj, self.storage_type_field, '')
-        bucket_name = getattr(obj, self.bucket_name_field, '')
-
         super(S3ImageUploadField, self)._delete_file(filename, obj)
 
-        self._delete_thumbnail(filename, storage_type, bucket_name)
+        self._delete_thumbnail(filename)
 
     def _delete_thumbnail_local(self, filename):
         path = self._get_path(self.thumbnail_fn(filename))
@@ -250,18 +225,18 @@ class S3ImageUploadField(S3FileUploadField):
         if op.exists(path):
             os.remove(path)
 
-    def _delete_thumbnail(self, filename, storage_type, bucket_name):
-        if not (storage_type and bucket_name):
+    def _delete_thumbnail(self, filename):
+        if not (self.storage_type and self.bucket_name):
             self._delete_thumbnail_local(filename)
             return
 
-        if storage_type != 's3':
+        if self.storage_type != 's3':
             raise ValueError(
                 'Storage type "%s" is invalid, the only supported storage type'
-                ' (apart from default local storage) is s3.' % storage_type)
+                ' (apart from default local storage) is s3.' % self.storage_type)
 
         conn = S3Connection(self.access_key_id, self.access_key_secret)
-        bucket = conn.get_bucket(bucket_name)
+        bucket = conn.get_bucket(self.bucket_name)
 
         path = self._get_s3_path(self.thumbnail_fn(filename))
         k = Key(bucket)
