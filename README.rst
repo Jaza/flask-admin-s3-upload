@@ -1,4 +1,4 @@
-flask-admin-s3-upload
+flask-admin-s3-upload with special function
 =====================
 
 Field types for allowing file and image uploads to Amazon S3 (as well as default local storage) in Flask-Admin.
