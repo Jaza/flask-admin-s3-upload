@@ -197,7 +197,11 @@ class S3FileUploadField(FileUploadField):
 
         try:
             bucket.put_object(Key=path, Body=temp_file.getvalue())
-            bucket.put_object_acl(Key=path, ACL=self.acl)
+            conn.put_object_acl(
+                Key=path,
+                ACL=self.acl,
+                Bucket=self.bucket_name
+            )
         except boto3.exceptions.S3UploadFailedError:
             pass
 
