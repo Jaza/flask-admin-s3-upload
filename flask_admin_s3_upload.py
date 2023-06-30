@@ -200,7 +200,6 @@ class S3FileUploadField(FileUploadField):
                 Body=file,
                 Bucket=self.bucket_name,
                 Key=path,
-                ACL='public-read'
             )
         except boto3.exceptions.S3UploadFailedError:
             pass
