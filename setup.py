@@ -23,7 +23,7 @@ setuptools.setup(
     zip_safe=False,
     platforms='any',
 
-    install_requires=['Flask-Admin', 'url-for-s3', 'boto'],
+    install_requires=['Flask-Admin', 'url-for-s3', 'boto3', 'urllib3'],
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

@@ -12,9 +12,8 @@ import os
 import os.path as op
 import re
 
-from boto.s3.connection import S3Connection
-from boto.exception import S3ResponseError
-from boto.s3.key import Key
+import boto3
+
 from werkzeug.datastructures import FileStorage
 
 from wtforms import ValidationError
@@ -25,6 +24,8 @@ from flask_admin._compat import urljoin
 
 from url_for_s3 import url_for_s3
 
+from botocore.exceptions import ClientError
+
 
 class S3FileUploadField(FileUploadField):
     """
@@ -33,7 +34,7 @@ class S3FileUploadField(FileUploadField):
     """
 
     def __init__(self, label=None, validators=None, storage_type=None,
-                 bucket_name=None, access_key_id=None,
+                 bucket_name=None, access_key_id=None, token=None,
                  access_key_secret=None, acl='public-read',
                  storage_type_field=None, bucket_name_field=None,
                  static_root_parent=None, **kwargs):
@@ -47,12 +48,20 @@ class S3FileUploadField(FileUploadField):
 
         self.storage_type = storage_type
         self.bucket_name = bucket_name
-        self.access_key_id = access_key_id
-        self.access_key_secret = access_key_secret
         self.acl = acl
         self.storage_type_field = storage_type_field
         self.bucket_name_field = bucket_name_field
         self.static_root_parent = static_root_parent
+
+        # Are we in an ECS container? If so, use the IAM role
+        if 'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI' in os.environ:
+            self.access_key_id = None
+            self.access_key_secret = None
+            self.token = None
+        else:
+            self.access_key_id = access_key_id
+            self.access_key_secret = access_key_secret
+            self.token = token
 
     def populate_obj(self, obj, name):
         field = getattr(obj, name, None)
@@ -99,7 +108,7 @@ class S3FileUploadField(FileUploadField):
             raise ValueError('S3FileUploadField field requires '
                              'static_root_parent to be set.')
 
-        return re.sub('^\/', '', self._get_path(filename).replace(
+        return re.sub('^/', '', self._get_path(filename).replace(
             self.static_root_parent, ''))
 
     def _delete_file(self, filename, obj):
@@ -114,16 +123,29 @@ class S3FileUploadField(FileUploadField):
                 'Storage type "%s" is invalid, the only supported storage type'
                 ' (apart from default local storage) is s3.' % storage_type)
 
-        conn = S3Connection(self.access_key_id, self.access_key_secret)
-        bucket = conn.get_bucket(bucket_name)
+        if self.access_key_id is None:
+            conn = boto3.client('s3')
+        else:
+            conn = boto3.client(
+                's3',
+                access_key_id=self.access_key_id,
+                access_key_secret=self.access_key_secret,
+                token=self.token
+            )
+
+        bucket = conn.Bucket(bucket_name)
 
         path = self._get_s3_path(filename)
-        k = Key(bucket)
-        k.key = path
 
         try:
-            bucket.delete_key(k)
-        except S3ResponseError:
+            bucket.delete_objects(
+                Delete={
+                    'Objects': [{
+                        'Key': path
+                    }]
+                }
+            )
+        except boto3.exceptions.S3DeleteError:
             pass
 
     def _save_file_local(self, temp_file, filename):
@@ -155,13 +177,25 @@ class S3FileUploadField(FileUploadField):
                 ' (apart from default local storage) is s3.'
                 % self.storage_type)
 
-        conn = S3Connection(self.access_key_id, self.access_key_secret)
-        bucket = conn.get_bucket(self.bucket_name)
+        if self.access_key_id is None:
+            conn = boto3.client('s3')
+        else:
+            conn = boto3.client(
+                's3',
+                access_key_id=self.access_key_id,
+                access_key_secret=self.access_key_secret,
+                token=self.token
+            )
+
+        bucket = conn.Bucket(self.bucket_name)
 
         path = self._get_s3_path(filename)
-        k = bucket.new_key(path)
-        k.set_contents_from_string(temp_file.getvalue())
-        k.set_acl(self.acl)
+
+        try:
+            bucket.put_object(Key=path, Body=temp_file.getvalue())
+            bucket.put_object_acl(Key=path, ACL=self.acl)
+        except boto3.exceptions.S3UploadFailedError:
+            pass
 
         return filename
 
@@ -260,17 +294,33 @@ class S3ImageUploadField(S3FileUploadField):
                 'Storage type "%s" is invalid, the only supported storage type'
                 ' (apart from default local storage) is s3.' % storage_type)
 
-        conn = S3Connection(self.access_key_id, self.access_key_secret)
-        bucket = conn.get_bucket(bucket_name)
+        if self.access_key_id is None:
+            conn = boto3.client('s3')
+        else:
+            conn = boto3.client(
+                's3',
+                access_key_id=self.access_key_id,
+                access_key_secret=self.access_key_secret,
+                token=self.token
+            )
 
-        path = self._get_s3_path(self.thumbnail_fn(filename))
-        k = Key(bucket)
-        k.key = path
+        bucket = conn.Bucket(bucket_name)
+
+        path = self._get_s3_path(filename)
 
         try:
-            bucket.delete_key(k)
-        except S3ResponseError:
-            pass
+            bucket.delete_objects(
+                Delete={
+                    'Objects': [{
+                        'Key': path
+                    }]
+                }
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                pass  # No such object, ignore the error
+            else:
+                raise  # Rethrow any other exceptions
 
     # Saving
     def _save_file(self, temp_file, filename):
