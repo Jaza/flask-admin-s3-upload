@@ -13,6 +13,8 @@ import os.path as op
 import re
 
 import boto3
+import urllib3
+import json
 
 from werkzeug.datastructures import FileStorage
 
@@ -32,6 +34,8 @@ class S3FileUploadField(FileUploadField):
     Inherits from flask-admin FileUploadField, to allow file uploading
     to Amazon S3 (as well as the default local storage).
     """
+
+    # Updated to boto3 which supports IAM credentials in containers.
 
     def __init__(self, label=None, validators=None, storage_type=None,
                  bucket_name=None, access_key_id=None, token=None,
