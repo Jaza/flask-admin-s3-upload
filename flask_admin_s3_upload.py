@@ -13,8 +13,7 @@ import os.path as op
 import re
 
 import boto3
-import urllib3
-import json
+from io import BytesIO
 
 from werkzeug.datastructures import FileStorage
 
@@ -190,18 +189,18 @@ class S3FileUploadField(FileUploadField):
                 token=self.token
             )
 
+        file = BytesIO()
+        file.write(temp_file.getvalue())
+        file.seek(0)
+
         path = self._get_s3_path(filename)
 
         try:
-            conn.upload_file(
-                temp_file.getvalue(),
-                self.bucket_name,
-                path
-            )
-            conn.put_object_acl(
+            conn.put_object(
+                Body=file,
+                Bucket=self.bucket_name,
                 Key=path,
-                ACL=self.acl,
-                Bucket=self.bucket_name
+                ACL='public-read'
             )
         except boto3.exceptions.S3UploadFailedError:
             pass
