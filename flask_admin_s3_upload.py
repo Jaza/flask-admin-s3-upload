@@ -128,21 +128,20 @@ class S3FileUploadField(FileUploadField):
                 ' (apart from default local storage) is s3.' % storage_type)
 
         if self.access_key_id is None:
-            conn = boto3.resource('s3')
+            conn = boto3.client('s3')
         else:
-            conn = boto3.resource(
+            conn = boto3.client(
                 's3',
                 access_key_id=self.access_key_id,
                 access_key_secret=self.access_key_secret,
                 token=self.token
             )
 
-        bucket = conn.Bucket(bucket_name)
-
         path = self._get_s3_path(filename)
 
         try:
-            bucket.delete_objects(
+            conn.delete_objects(
+                Bucket=bucket_name,
                 Delete={
                     'Objects': [{
                         'Key': path
@@ -182,21 +181,23 @@ class S3FileUploadField(FileUploadField):
                 % self.storage_type)
 
         if self.access_key_id is None:
-            conn = boto3.resource('s3')
+            conn = boto3.client('s3')
         else:
-            conn = boto3.resource(
+            conn = boto3.client(
                 's3',
                 access_key_id=self.access_key_id,
                 access_key_secret=self.access_key_secret,
                 token=self.token
             )
 
-        bucket = conn.Bucket(self.bucket_name)
-
         path = self._get_s3_path(filename)
 
         try:
-            bucket.put_object(Key=path, Body=temp_file.getvalue())
+            conn.upload_file(
+                temp_file.getvalue(),
+                self.bucket_name,
+                path
+            )
             conn.put_object_acl(
                 Key=path,
                 ACL=self.acl,
@@ -303,26 +304,25 @@ class S3ImageUploadField(S3FileUploadField):
                 ' (apart from default local storage) is s3.' % storage_type)
 
         if self.access_key_id is None:
-            conn = boto3.resource('s3')
+            conn = boto3.client('s3')
         else:
-            conn = boto3.resource(
+            conn = boto3.client(
                 's3',
                 access_key_id=self.access_key_id,
                 access_key_secret=self.access_key_secret,
                 token=self.token
             )
 
-        bucket = conn.Bucket(bucket_name)
-
         path = self._get_s3_path(filename)
 
         try:
-            bucket.delete_objects(
+            conn.delete_objects(
                 Delete={
                     'Objects': [{
                         'Key': path
                     }]
-                }
+                },
+                Bucket=bucket_name
             )
         except ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchKey':
