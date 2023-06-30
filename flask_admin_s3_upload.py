@@ -128,9 +128,9 @@ class S3FileUploadField(FileUploadField):
                 ' (apart from default local storage) is s3.' % storage_type)
 
         if self.access_key_id is None:
-            conn = boto3.client('s3')
+            conn = boto3.resource('s3')
         else:
-            conn = boto3.client(
+            conn = boto3.resource(
                 's3',
                 access_key_id=self.access_key_id,
                 access_key_secret=self.access_key_secret,
@@ -182,9 +182,9 @@ class S3FileUploadField(FileUploadField):
                 % self.storage_type)
 
         if self.access_key_id is None:
-            conn = boto3.client('s3')
+            conn = boto3.resource('s3')
         else:
-            conn = boto3.client(
+            conn = boto3.resource(
                 's3',
                 access_key_id=self.access_key_id,
                 access_key_secret=self.access_key_secret,
@@ -299,9 +299,9 @@ class S3ImageUploadField(S3FileUploadField):
                 ' (apart from default local storage) is s3.' % storage_type)
 
         if self.access_key_id is None:
-            conn = boto3.client('s3')
+            conn = boto3.resource('s3')
         else:
-            conn = boto3.client(
+            conn = boto3.resource(
                 's3',
                 access_key_id=self.access_key_id,
                 access_key_secret=self.access_key_secret,
