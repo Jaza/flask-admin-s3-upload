@@ -136,7 +136,7 @@ class S3FileUploadField(FileUploadField):
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.access_key_secret,
                 region_name=self.region_name,
-                token=self.token
+                aws_session_token=self.token
             )
 
         path = self._get_s3_path(filename)
@@ -190,7 +190,7 @@ class S3FileUploadField(FileUploadField):
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.access_key_secret,
                 region_name=os.environ.get('AWS_REGION'),
-                token=self.token
+                aws_session_token=self.token
             )
 
         file = BytesIO()
@@ -313,7 +313,7 @@ class S3ImageUploadField(S3FileUploadField):
                 aws_access_key_id=self.access_key_id,
                 aws_secret_access_key=self.access_key_secret,
                 region_name=os.environ.get('AWS_REGION'),
-                token=self.token
+                aws_session_token=self.token
             )
 
         path = self._get_s3_path(filename)
