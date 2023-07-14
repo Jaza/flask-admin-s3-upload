@@ -4,6 +4,11 @@ flask-admin-s3-upload
 Field types for allowing file and image uploads to Amazon S3 (as well as default local storage) in Flask-Admin.
 
 
+Boto3 Support
+-------------
+This fork adds support for boto3. It should be a drop in replacement for the original version. Also supports "container mode" where boto3 will automatically pull in credentials via IAM.
+
+
 Example
 -------
 
