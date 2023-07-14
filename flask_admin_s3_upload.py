@@ -134,7 +134,7 @@ class S3FileUploadField(FileUploadField):
             conn = boto3.client(
                 's3',
                 aws_access_key_id=self.access_key_id,
-                aws_access_key_secret=self.access_key_secret,
+                aws_secret_access_key=self.access_key_secret,
                 region_name=self.region_name,
                 token=self.token
             )
@@ -188,7 +188,7 @@ class S3FileUploadField(FileUploadField):
             conn = boto3.client(
                 's3',
                 aws_access_key_id=self.access_key_id,
-                aws_access_key_secret=self.access_key_secret,
+                aws_secret_access_key=self.access_key_secret,
                 region_name=os.environ.get('AWS_REGION'),
                 token=self.token
             )
@@ -311,7 +311,7 @@ class S3ImageUploadField(S3FileUploadField):
             conn = boto3.client(
                 's3',
                 aws_access_key_id=self.access_key_id,
-                aws_access_key_secret=self.access_key_secret,
+                aws_secret_access_key=self.access_key_secret,
                 region_name=os.environ.get('AWS_REGION'),
                 token=self.token
             )
