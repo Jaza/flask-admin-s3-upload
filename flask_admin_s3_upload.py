@@ -40,7 +40,7 @@ class S3FileUploadField(FileUploadField):
                  bucket_name=None, access_key_id=None, token=None,
                  access_key_secret=None, acl='public-read',
                  storage_type_field=None, bucket_name_field=None,
-                 static_root_parent=None, **kwargs):
+                 static_root_parent=None, region_name=None, **kwargs):
         super(S3FileUploadField, self).__init__(label, validators, **kwargs)
 
         if storage_type and (storage_type != 's3'):
@@ -60,10 +60,12 @@ class S3FileUploadField(FileUploadField):
         if 'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI' in os.environ:
             self.access_key_id = None
             self.access_key_secret = None
+            self.region_name = None
             self.token = None
         else:
             self.access_key_id = access_key_id
             self.access_key_secret = access_key_secret
+            self.region_name = region_name
             self.token = token
 
     def populate_obj(self, obj, name):
@@ -131,8 +133,9 @@ class S3FileUploadField(FileUploadField):
         else:
             conn = boto3.client(
                 's3',
-                access_key_id=self.access_key_id,
-                access_key_secret=self.access_key_secret,
+                aws_access_key_id=self.access_key_id,
+                aws_access_key_secret=self.access_key_secret,
+                region_name=self.region_name,
                 token=self.token
             )
 
@@ -184,8 +187,9 @@ class S3FileUploadField(FileUploadField):
         else:
             conn = boto3.client(
                 's3',
-                access_key_id=self.access_key_id,
-                access_key_secret=self.access_key_secret,
+                aws_access_key_id=self.access_key_id,
+                aws_access_key_secret=self.access_key_secret,
+                region_name=os.environ.get('AWS_REGION'),
                 token=self.token
             )
 
@@ -306,8 +310,9 @@ class S3ImageUploadField(S3FileUploadField):
         else:
             conn = boto3.client(
                 's3',
-                access_key_id=self.access_key_id,
-                access_key_secret=self.access_key_secret,
+                aws_access_key_id=self.access_key_id,
+                aws_access_key_secret=self.access_key_secret,
+                region_name=os.environ.get('AWS_REGION'),
                 token=self.token
             )
 
